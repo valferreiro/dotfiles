@@ -19,9 +19,11 @@ echo
 
 case "$OS" in
     Linux)
-        echo "Sistema Linux detectado"
+        OS_CONFIG_DIR="$CONFIG_DIR/linux"
+        echo "Linux detectado"
         ;;
     Darwin)
+        OS_CONFIG_DIR="$CONFIG_DIR/macos"
         echo "macOS detectado"
         ;;
     *)
@@ -54,7 +56,7 @@ backup_and_link() {
 
         echo "Symlink diferente encontrado:"
         echo "  $target"
-        echo "  $current_target"
+        echo "    $current_target"
 
         rm "$target"
 
@@ -63,7 +65,7 @@ backup_and_link() {
 
         echo "Backup:"
         echo "  $target"
-        echo "  $BACKUP_DIR/"
+        echo "    $BACKUP_DIR/"
 
         mv "$target" "$BACKUP_DIR/"
     fi
@@ -76,88 +78,90 @@ backup_and_link() {
 echo "Configurando Fish..."
 
 backup_and_link \
-    "$CONFIG_DIR/fish/config.fish" \
+    "$CONFIG_DIR/common/fish/config.fish" \
     "$HOME/.config/fish/config.fish"
 
 backup_and_link \
-    "$CONFIG_DIR/fish/fish.conf" \
+    "$CONFIG_DIR/common/fish/fish.conf" \
     "$HOME/.config/fish/fish.conf"
 
 echo
 echo "Configurando Kitty..."
 
 backup_and_link \
-    "$CONFIG_DIR/kitty/kitty.conf" \
+    "$CONFIG_DIR/common/kitty/kitty.conf" \
     "$HOME/.config/kitty/kitty.conf"
 
 backup_and_link \
-    "$CONFIG_DIR/kitty/current-theme.conf" \
+    "$CONFIG_DIR/common/kitty/current-theme.conf" \
     "$HOME/.config/kitty/current-theme.conf"
-
-echo
-echo "Configurando Fastfetch..."
-
-backup_and_link \
-    "$CONFIG_DIR/fastfetch/config.jsonc" \
-    "$HOME/.config/fastfetch/config.jsonc"
-
-if [ -d "$CONFIG_DIR/fastfetch/images" ]; then
-    mkdir -p "$HOME/.config/fastfetch"
-
-    if [ -L "$HOME/.config/fastfetch/images" ]; then
-        current_target="$(readlink "$HOME/.config/fastfetch/images")"
-
-        if [ "$current_target" = "$CONFIG_DIR/fastfetch/images" ]; then
-            echo "✓ Fastfetch images ya configuradas"
-        else
-            rm "$HOME/.config/fastfetch/images"
-
-            ln -s \
-                "$CONFIG_DIR/fastfetch/images" \
-                "$HOME/.config/fastfetch/images"
-
-            echo "Fastfetch images configuradas"
-        fi
-
-    elif [ -d "$HOME/.config/fastfetch/images" ]; then
-        mkdir -p "$BACKUP_DIR"
-
-        echo "Backup:"
-        echo "  $HOME/.config/fastfetch/images"
-        echo "  $BACKUP_DIR/"
-
-        mv \
-            "$HOME/.config/fastfetch/images" \
-            "$BACKUP_DIR/"
-
-        ln -s \
-            "$CONFIG_DIR/fastfetch/images" \
-            "$HOME/.config/fastfetch/images"
-
-        echo "Fastfetch images configuradas"
-
-    else
-        ln -s \
-            "$CONFIG_DIR/fastfetch/images" \
-            "$HOME/.config/fastfetch/images"
-
-        echo "Fastfetch images configuradas"
-    fi
-fi
 
 echo
 echo "Configurando Starship..."
 
 backup_and_link \
-    "$CONFIG_DIR/starship.toml" \
+    "$CONFIG_DIR/common/starship.toml" \
     "$HOME/.config/starship.toml"
 
 echo
 echo "Configurando Git..."
 
 backup_and_link \
-    "$CONFIG_DIR/git/.gitconfig" \
+    "$CONFIG_DIR/common/git/.gitconfig" \
     "$HOME/.gitconfig"
+
+if [ "$OS" = "Linux" ]; then
+    echo
+    echo "Configurando Fastfetch..."
+
+    backup_and_link \
+        "$OS_CONFIG_DIR/fastfetch/config.jsonc" \
+        "$HOME/.config/fastfetch/config.jsonc"
+
+    if [ -d "$OS_CONFIG_DIR/fastfetch/images" ]; then
+        mkdir -p "$HOME/.config/fastfetch"
+
+        if [ -L "$HOME/.config/fastfetch/images" ]; then
+            current_target="$(readlink "$HOME/.config/fastfetch/images")"
+
+            if [ "$current_target" = "$OS_CONFIG_DIR/fastfetch/images" ]; then
+                echo "Fastfetch images ya configuradas"
+            else
+                rm "$HOME/.config/fastfetch/images"
+
+                ln -s \
+                    "$OS_CONFIG_DIR/fastfetch/images" \
+                    "$HOME/.config/fastfetch/images"
+
+                echo "Fastfetch images configuradas"
+            fi
+
+        elif [ -e "$HOME/.config/fastfetch/images" ]; then
+            mkdir -p "$BACKUP_DIR"
+
+            echo "Backup:"
+            echo "  $HOME/.config/fastfetch/images"
+            echo "    $BACKUP_DIR/"
+
+            mv \
+                "$HOME/.config/fastfetch/images" \
+                "$BACKUP_DIR/"
+
+            ln -s \
+                "$OS_CONFIG_DIR/fastfetch/images" \
+                "$HOME/.config/fastfetch/images"
+
+            echo "Fastfetch images configuradas"
+
+        else
+            ln -s \
+                "$OS_CONFIG_DIR/fastfetch/images" \
+                "$HOME/.config/fastfetch/images"
+
+            echo "Fastfetch images configuradas"
+        fi
+    fi
+fi
 
 echo
 echo "======================================"
@@ -174,4 +178,4 @@ else
 fi
 
 echo
-echo "Tus configuraciones ahora apuntan al repositorio."
+echo "Configuraciones instaladas correctamente."
